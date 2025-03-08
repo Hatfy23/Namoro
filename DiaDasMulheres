@@ -18,26 +18,43 @@ def generate_heart_plot():
     img = io.BytesIO()
     plt.savefig(img, format='png', bbox_inches='tight', facecolor='black')
     img.seek(0)
-    plot_url = base64.b64encode(img.getvalue()).decode()
+    heart_url = base64.b64encode(img.getvalue()).decode()
     plt.close()
-    return plot_url
+    return heart_url
 
-def generate_flower_plot():
+def generate_flower_plot(x_offset=0, y_offset=0):
     theta = np.linspace(0, 2 * np.pi, 1000)
     r = 10 * np.sin(6 * theta)  # 6 pétalas
-    x = r * np.cos(theta)
-    y = r * np.sin(theta)
+    x = r * np.cos(theta) + x_offset
+    y = r * np.sin(theta) + y_offset
     
-    plt.figure(figsize=(6, 6), facecolor='black')
     plt.plot(x, y, 'magenta', linewidth=3)
+
+def generate_combined_plot():
+    heart_url = generate_heart_plot()
+
+    # Plot the heart in the center
+    plt.figure(figsize=(6, 6), facecolor='black')
     plt.axis("off")
     
+    # Plot heart in the middle
+    t = np.linspace(0, 2 * np.pi, 1000)
+    x = 16 * np.sin(t) ** 3
+    y = 13 * np.cos(t) - 5 * np.cos(2 * t) - 2 * np.cos(3 * t) - np.cos(4 * t)
+    plt.plot(x, y, 'r', linewidth=3)
+
+    # Plot 3 flowers around the heart
+    flower_positions = [(0, 0), (15, 10), (-15, -10)]  # Position for flowers
+    for pos in flower_positions:
+        generate_flower_plot(pos[0], pos[1])
+
+    # Save the combined image
     img = io.BytesIO()
     plt.savefig(img, format='png', bbox_inches='tight', facecolor='black')
     img.seek(0)
-    plot_url = base64.b64encode(img.getvalue()).decode()
+    combined_url = base64.b64encode(img.getvalue()).decode()
     plt.close()
-    return plot_url
+    return combined_url
 
 @app.route('/')
 def home():
@@ -47,39 +64,21 @@ def home():
                 </head>
                 <body style="text-align: center; background-color: black; color: white;">
                     <h1>Click em um botão para ver sua surpresa!</h1>
-                    <form action="/heart" style="display:inline;">
-                        <button type="submit" style="font-size: 20px; padding: 10px; margin: 10px;">Mostrar Coração</button>
-                    </form>
-                    <form action="/flower" style="display:inline;">
-                        <button type="submit" style="font-size: 20px; padding: 10px; margin: 10px;">Mostrar Flor</button>
+                    <form action="/surprise" style="display:inline;">
+                        <button type="submit" style="font-size: 20px; padding: 10px; margin: 10px;">Mostrar Surpresa</button>
                     </form>
                 </body>
               </html>'''
 
-@app.route('/heart')
-def heart():
-    plot_url = generate_heart_plot()
+@app.route('/surprise')
+def surprise():
+    plot_url = generate_combined_plot()
     return f'''<html>
                 <head>
                     <title>Com Amor ❤️</title>
                 </head>
                 <body style="text-align: center; background-color: black; color: white;">
                     <h1>Para você, com todo meu carinho! ❤️</h1>
-                    <img src="data:image/png;base64,{plot_url}"/>
-                    <br><br>
-                    <a href="/" style="color: white; font-size: 20px;">Voltar</a>
-                </body>
-              </html>'''
-
-@app.route('/flower')
-def flower():
-    plot_url = generate_flower_plot()
-    return f'''<html>
-                <head>
-                    <title>Uma Flor para Você 🌸</title>
-                </head>
-                <body style="text-align: center; background-color: black; color: white;">
-                    <h1>Espero que goste dessa flor especial! 🌸</h1>
                     <img src="data:image/png;base64,{plot_url}"/>
                     <br><br>
                     <a href="/" style="color: white; font-size: 20px;">Voltar</a>
